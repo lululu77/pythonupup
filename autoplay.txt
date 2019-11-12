@@ -1,0 +1,40 @@
+adb root
+adb remount
+Add-Type -AssemblyName presentationCore
+#添加presentationCore
+$count=0
+$array=Get-Content C:\Users\aispeech\Desktop\filelist.txt
+foreach($file in $array)
+{
+$path = "D:\youbixuan\$file"
+echo $path
+#音乐文件的位置
+$count+=1
+echo $count
+$player = New-Object System.Windows.Media.MediaPlayer
+#新建一个播放器对象
+$player.Open($path)
+#打开之前的创建的$path变量，也就是打开音乐文件
+Start-Sleep 1
+#暂停一下，等待音乐文件加载完成
+$time = $player.NaturalDuration.TimeSpan.TotalSeconds
+#把音乐的时间长度设置为一个变量备用
+echo $time
+$time+=3
+$sb = {adb shell ./mnt/luyin.sh 0 $args[0]}
+$job1=Start-Job -ScriptBlock $sb  -ArgumentList $time
+Start-Sleep 3
+$sb2 = {$args[0]}
+$job2=Start-Job -ScriptBlock $sb2  -ArgumentList $player.Play()
+
+#$job2 |Wait-Job
+$job1 |Wait-Job
+#开始播放音乐
+Start-Sleep $time
+#等待音乐播放完成，这里就用了上面的时间变量
+$player.Stop()
+#停止播放
+$player.Close()
+#关闭播放器
+adb pull /data/nearrecord.wav ./ybx/near$count".wav"
+}
